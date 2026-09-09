@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>تسجيل بيانات الطلاب - ثانوية الأمير عبدالمجيد</title>
-    <!-- استخدام نفس إصدار مكتبة Firebase الموجود في لوحة تحكمك -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
     <style>
@@ -48,7 +47,7 @@
 </div>
 
 <script>
-    // نفس بيانات الاتصال بقاعدة البيانات الخاصة بلوحتك
+    // نفس بيانات الاتصال بقاعدة البيانات الخاصة بك
     const firebaseConfig = {
         apiKey: "AIzaSyBkCO7FDQXd89YDf843J4_AtvEFvzzt-R0",
         authDomain: "aztlg-494c3.firebaseapp.com",
@@ -66,7 +65,7 @@
         const nameInput = document.getElementById("studentName").value.trim();
         const emailInput = document.getElementById("studentEmail").value.trim().toLowerCase();
 
-        // 1. التحقق من أن الاسم ثلاثي (يحتوي على مسافتين على الأقل)
+        // التحقق من أن الاسم ثلاثي
         const nameParts = nameInput.split(/\s+/);
         if (nameParts.length < 3) {
             msg.style.color = "red";
@@ -74,30 +73,29 @@
             return;
         }
 
-        // 2. التحقق من صيغة الإيميل (يبدأ بـ s وينتهي بالنطاق المطلوب)
+        // التحقق من صيغة الإيميل لمنصة مدرستي
         const emailRegex = /^s.+@rg\.moe\.gov\.sa$/;
         if (!emailRegex.test(emailInput)) {
             msg.style.color = "red";
-            msg.innerText = "❌ عذراً، الإيميل غير صحيح. يجب أن يبدأ بحرف s ويكون تابع لمنصة مدرستي (مثال: s78510@rg.moe.gov.sa).";
+            msg.innerText = "❌ عذراً، الإيميل غير صحيح. يجب أن يبدأ بحرف s ويكون تابع لمنصة مدرستي.";
             return;
         }
 
-        // إيقاف الزر أثناء الإرسال لمنع التكرار
         btn.disabled = true;
         btn.innerText = "جاري الإرسال...";
         msg.innerText = "";
 
         try {
-            // إضافة البيانات بنفس طريقة لوحتك تماماً (يستخدم الإيميل كمعرف)
+            // إضافة الطالب مع تحديد حالته كـ "معلق" (pending) لكي يذهب للوحة المراجعة
             await db.collection("allowed_students").doc(emailInput).set({
                 name: nameInput,
+                status: "pending", // السر هنا لكي يظهر في الطلبات المعلقة
                 added_at: firebase.firestore.FieldValue.serverTimestamp()
             });
 
             msg.style.color = "green";
-            msg.innerText = "✅ تم إرسال بياناتك بنجاح. شكراً لك!";
+            msg.innerText = "✅ تم إرسال بياناتك بنجاح وفي انتظار موافقة المعلم.";
             
-            // تفريغ الحقول بعد الإرسال
             document.getElementById("studentName").value = "";
             document.getElementById("studentEmail").value = "";
         } catch (error) {
