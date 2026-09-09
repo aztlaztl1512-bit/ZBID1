@@ -14,7 +14,7 @@
         .header p { color: #666; margin-bottom: 25px; font-size: 0.9rem; }
         .input-group { margin-bottom: 15px; text-align: right; }
         .input-group label { display: block; margin-bottom: 5px; font-weight: bold; color: #333; }
-        input { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #ccc; font-family: sans-serif; font-size: 1rem; box-sizing: border-box; transition: 0.3s; }
+        input { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #ccc; font-family: sans-serif; font-size: 1.0rem; box-sizing: border-box; transition: 0.3s; }
         input:focus { border-color: var(--maroon); outline: none; box-shadow: 0 0 5px rgba(128,0,0,0.2); }
         .btn-submit { width: 100%; padding: 14px; margin-top: 10px; background: var(--maroon); color: var(--gold); border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 1.1rem; transition: 0.3s; }
         .btn-submit:hover { background: #660000; }
@@ -47,7 +47,6 @@
 </div>
 
 <script>
-    // نفس بيانات الاتصال بقاعدة البيانات الخاصة بك
     const firebaseConfig = {
         apiKey: "AIzaSyBkCO7FDQXd89YDf843J4_AtvEFvzzt-R0",
         authDomain: "aztlg-494c3.firebaseapp.com",
@@ -65,7 +64,7 @@
         const nameInput = document.getElementById("studentName").value.trim();
         const emailInput = document.getElementById("studentEmail").value.trim().toLowerCase();
 
-        // التحقق من أن الاسم ثلاثي
+        // 1. التحقق من الاسم ثلاثي
         const nameParts = nameInput.split(/\s+/);
         if (nameParts.length < 3) {
             msg.style.color = "red";
@@ -73,7 +72,7 @@
             return;
         }
 
-        // التحقق من صيغة الإيميل لمنصة مدرستي
+        // 2. التحقق من صيغة إيميل منصة مدرستي
         const emailRegex = /^s.+@rg\.moe\.gov\.sa$/;
         if (!emailRegex.test(emailInput)) {
             msg.style.color = "red";
@@ -82,14 +81,27 @@
         }
 
         btn.disabled = true;
-        btn.innerText = "جاري الإرسال...";
+        btn.innerText = "جاري التحقق والإرسال...";
         msg.innerText = "";
 
         try {
-            // إضافة الطالب مع تحديد حالته كـ "معلق" (pending) لكي يذهب للوحة المراجعة
-            await db.collection("allowed_students").doc(emailInput).set({
+            // 3. التحقق مسبقاً إذا كان البريد الإلكتروني مسجلاً بالفعل في قاعدة البيانات
+            const docRef = db.collection("allowed_students").doc(emailInput);
+            const docSnap = await docRef.get();
+
+            if (docSnap.exists) {
+                // الإيميل موجود مسبقاً
+                msg.style.color = "orange";
+                msg.innerText = "⚠️ أنت مسجل مسبقاً في النظام ولا داعي لإعادة التسجيل!";
+                btn.disabled = false;
+                btn.innerText = "إرسال بياناتي 🚀";
+                return;
+            }
+
+            // 4. إذا لم يكن موجوداً، قم بحفظه كطلب جديد (معلق)
+            await docRef.set({
                 name: nameInput,
-                status: "pending", // السر هنا لكي يظهر في الطلبات المعلقة
+                status: "pending",
                 added_at: firebase.firestore.FieldValue.serverTimestamp()
             });
 
