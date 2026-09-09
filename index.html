@@ -76,7 +76,7 @@
         const emailRegex = /^s.+@rg\.moe\.gov\.sa$/;
         if (!emailRegex.test(emailInput)) {
             msg.style.color = "red";
-            msg.innerText = "❌ عذراً، تم تسجبل اسمك وايميلك من قبل   .";
+            msg.innerText = "❌ عذراً، الإيميل غير صحيح. يجب أن يبدأ بحرف s ويكون تابع لمنصة مدرستي.";
             return;
         }
 
@@ -85,12 +85,11 @@
         msg.innerText = "";
 
         try {
-            // 3. التحقق مسبقاً إذا كان البريد الإلكتروني مسجلاً بالفعل في قاعدة البيانات
-            const docRef = db.collection("allowed_students").doc(emailInput);
-            const docSnap = await docRef.get();
+            // 3. التحقق هل هو مسجل مسبقاً في المعتمدين أو في قائمة الانتظار
+            const allowedCheck = await db.collection("allowed_students").doc(emailInput).get();
+            const pendingCheck = await db.collection("pending_students").doc(emailInput).get();
 
-            if (docSnap.exists) {
-                // الإيميل موجود مسبقاً
+            if (allowedCheck.exists || pendingCheck.exists) {
                 msg.style.color = "orange";
                 msg.innerText = "⚠️ أنت مسجل مسبقاً في النظام ولا داعي لإعادة التسجيل!";
                 btn.disabled = false;
@@ -98,10 +97,9 @@
                 return;
             }
 
-            // 4. إذا لم يكن موجوداً، قم بحفظه كطلب جديد (معلق)
-            await docRef.set({
+            // 4. الحفظ حصرياً في قائمة الانتظار (Pending) ولن يدخل الاختبار أبداً إلا بالموافقة
+            await db.collection("pending_students").doc(emailInput).set({
                 name: nameInput,
-                status: "pending",
                 added_at: firebase.firestore.FieldValue.serverTimestamp()
             });
 
