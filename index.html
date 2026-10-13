@@ -38,7 +38,7 @@
 
     <div class="input-group">
         <label>البريد الإلكتروني (منصة مدرستي):</label>
-        <input type="email" id="studentEmail" placeholder="sXXXXX@rg.moe.gov.sa" autocomplete="off" required dir="ltr">
+        <input type="email" id="studentEmail" placeholder="sXXXXX@rb.moe.gov.sa" autocomplete="off" required dir="ltr">
     </div>
 
     <button class="btn-submit" id="submitBtn" onclick="submitStudentData()">إرسال بياناتي 🚀</button>
@@ -84,11 +84,11 @@
             return;
         }
 
-        // 2. التحقق من صيغة إيميل منصة مدرستي
-        const emailRegex = /^s.+@rg\.moe\.gov\.sa$/;
+        // 2. التحقق من صيغة إيميل منصة مدرستي الجديد (rb.moe.gov.sa)
+        const emailRegex = /^s.+@rb\.moe\.gov\.sa$/;
         if (!emailRegex.test(emailInput)) {
             msg.style.color = "red";
-            msg.innerText = "❌ صيغة البريد الإلكتروني غير صحيحة، يرجى إدخال بريد منصة مدرستي.";
+            msg.innerText = "❌ صيغة البريد الإلكتروني غير صحيحة، يجب أن ينتهي بـ @rb.moe.gov.sa";
             return;
         }
 
@@ -97,7 +97,7 @@
         msg.innerText = "";
 
         try {
-            // 3. التحقق حصرياً هل هو مسجل في قائمة المقبولين المعتمدين فقط
+            // 3. التحقق حصرياً هل هو مسجل مقيد في قائمة المقبولين المعتمدين فقط
             const allowedCheck = await db.collection("allowed_students").doc(emailInput).get();
 
             if (allowedCheck.exists) {
@@ -108,7 +108,7 @@
                 return;
             }
 
-            // 4. الحفظ في قائمة الانتظار (Pending) وتحديث البيانات إذا كانت موجودة مسبقاً
+            // 4. الحفظ في قائمة الانتظار (Pending) مع تحديث البيانات إذا أرسل مجدداً
             await db.collection("pending_students").doc(emailInput).set({
                 name: nameInput,
                 added_at: firebase.firestore.FieldValue.serverTimestamp(),
