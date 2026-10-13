@@ -88,7 +88,7 @@
         const emailRegex = /^s.+@rg\.moe\.gov\.sa$/;
         if (!emailRegex.test(emailInput)) {
             msg.style.color = "red";
-            msg.innerText = "❌  مسجل مسبقاً في النظام ولا داعي لإعادة التسجيل .";
+            msg.innerText = "❌ صيغة البريد الإلكتروني غير صحيحة، يرجى إدخال بريد منصة مدرستي.";
             return;
         }
 
@@ -97,24 +97,23 @@
         msg.innerText = "";
 
         try {
-            // 3. التحقق هل هو مسجل مسبقاً في المعتمدين أو في قائمة الانتظار
+            // 3. التحقق حصرياً هل هو مسجل في قائمة المقبولين المعتمدين فقط
             const allowedCheck = await db.collection("allowed_students").doc(emailInput).get();
-            const pendingCheck = await db.collection("pending_students").doc(emailInput).get();
 
-            if (allowedCheck.exists || pendingCheck.exists) {
+            if (allowedCheck.exists) {
                 msg.style.color = "orange";
-                msg.innerText = "⚠️ أنت مسجل مسبقاً في النظام ولا داعي لإعادة التسجيل!";
+                msg.innerText = "⚠️ أنت مسجل ومقبول مسبقاً في النظام ولا داعي لإعادة التسجيل!";
                 btn.disabled = false;
                 btn.innerText = "إرسال بياناتي 🚀";
                 return;
             }
 
-            // 4. الحفظ حصرياً في قائمة الانتظار (Pending) ولن يدخل الاختبار أبداً إلا بالموافقة
+            // 4. الحفظ في قائمة الانتظار (Pending) وتحديث البيانات إذا كانت موجودة مسبقاً
             await db.collection("pending_students").doc(emailInput).set({
                 name: nameInput,
                 added_at: firebase.firestore.FieldValue.serverTimestamp(),
                 verified_by: systemOwner + " - " + systemSchool
-            });
+            }, { merge: true });
 
             msg.style.color = "green";
             msg.innerText = "✅ تم إرسال بياناتك بنجاح وفي انتظار موافقة المعلم.";
